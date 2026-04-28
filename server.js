@@ -316,6 +316,49 @@ app.post('/api/sessions/:id/complete', async (req, res) => {
   }
 });
 
+// Get dealer summary
+app.get('/api/sessions/:id/dealer-summary', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT dealer, sort_group, case_id, sku, qty FROM manifest 
+       WHERE session_id = $1 ORDER BY dealer, sort_group, case_id, sku`,
+      [req.params.id]
+    );
+    
+    // Group by dealer
+    const dealerMap = {};
+    result.rows.forEach(row => {
+      if (!dealerMap[row.dealer]) {
+        dealerMap[row.dealer] = {
+          name: row.dealer,
+          groups: new Set(),
+          cases: [],
+          totalQty: 0
+        };
+      }
+      dealerMap[row.dealer].groups.add(row.sort_group);
+      dealerMap[row.dealer].cases.push({
+        case_id: row.case_id,
+        sku: row.sku,
+        sort_group: row.sort_group,
+        qty: row.qty
+      });
+      dealerMap[row.dealer].totalQty += row.qty;
+    });
+    
+    // Convert to array and convert Sets to arrays
+    const dealers = Object.values(dealerMap).map(d => ({
+      ...d,
+      groups: Array.from(d.groups)
+    }));
+    
+    res.json(dealers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
