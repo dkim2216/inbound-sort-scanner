@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 
 export default function Scan({ sessionId, sessions }) {
   const [step, setStep] = useState(1);
@@ -104,6 +104,19 @@ export default function Scan({ sessionId, sessions }) {
     }
   };
 
+  const handleBack = () => {
+    if (step === 3) {
+      setStep(2);
+      setSelectedSku('');
+      setDestinations([]);
+    } else if (step === 2) {
+      setStep(1);
+      setSelectedCase('');
+      setSkus([]);
+    }
+    setMessage(null);
+  };
+
   const handleReset = () => {
     setStep(1);
     setSelectedCase('');
@@ -206,12 +219,21 @@ export default function Scan({ sessionId, sessions }) {
               <h3 className="text-lg md:text-xl font-semibold text-gray-900">Step 2: Select SKU</h3>
               <p className="text-gray-600 text-sm mt-1">Case: <span className="font-semibold">{selectedCase}</span></p>
             </div>
-            <button
-              onClick={handleReset}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Change Case
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBack}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                onClick={handleReset}
+                className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {skus.map(sku => (
@@ -238,12 +260,21 @@ export default function Scan({ sessionId, sessions }) {
                 Case: <span className="font-semibold">{selectedCase}</span> | SKU: <span className="font-semibold">{selectedSku}</span>
               </p>
             </div>
-            <button
-              onClick={handleReset}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Start Over
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBack}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                onClick={handleReset}
+                className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
