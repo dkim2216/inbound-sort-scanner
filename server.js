@@ -5,6 +5,7 @@ import { parse } from 'csv-parse/sync';
 import pg from 'pg';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -19,7 +20,12 @@ const pool = new pg.Pool({
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'dist')));
+
+// Serve static files from dist if it exists
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
 
 // Initialize database
 async function initDB() {
@@ -213,9 +219,14 @@ app.get('/api/sessions/:id/progress', async (req, res) => {
   }
 });
 
-// SPA fallback
+// SPA fallback - serve index.html for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('App not built. Run: npm run build');
+  }
 });
 
 // Start server
