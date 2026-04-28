@@ -1,4 +1,4 @@
-import { Menu, X, Upload, Scan, BarChart3, List } from 'lucide-react';
+import { Menu, X, Upload, Scan, BarChart3, List, Users } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Sidebar({ currentPage, onPageChange, activeSession }) {
@@ -8,7 +8,8 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
     { id: 'sessions', label: 'Sessions', icon: List },
     { id: 'upload', label: 'Upload', icon: Upload },
     { id: 'scan', label: 'Scan', icon: Scan, disabled: !activeSession },
-    { id: 'progress', label: 'Progress', icon: BarChart3, disabled: !activeSession }
+    { id: 'progress', label: 'Progress', icon: BarChart3, disabled: !activeSession },
+    { id: 'dealers', label: 'Dealers', icon: Users, disabled: !activeSession }
   ];
 
   return (
