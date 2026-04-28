@@ -254,6 +254,13 @@ app.post('/api/sessions/:id/complete', async (req, res) => {
     if (sessionResult.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     const session = sessionResult.rows[0];
     
+    // Get all manifest items
+    const manifestResult = await pool.query(
+      `SELECT case_id, sku, dealer, sort_group, qty, done FROM manifest WHERE session_id = $1 ORDER BY case_id, sku`,
+      [sessionId]
+    );
+    const items = manifestResult.rows;
+    
     // Get progress
     const progressResult = await pool.query(
       `SELECT COUNT(*) as total, SUM(CASE WHEN done THEN 1 ELSE 0 END) as completed
@@ -261,6 +268,16 @@ app.post('/api/sessions/:id/complete', async (req, res) => {
       [sessionId]
     );
     const { total, completed } = progressResult.rows[0];
+    
+    // Build HTML table
+    let tableHTML = '<table style="width:100%; border-collapse: collapse; margin-top: 15px;"><tr style="background: #333; color: white;"><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Case</th><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">SKU</th><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Dealer</th><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Group</th><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Qty</th><th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Status</th></tr>';
+    
+    items.forEach(item => {
+      const status = item.done ? '✓ Completed' : '✗ Incomplete';
+      const bgColor = item.done ? '#d4edda' : '#f8d7da';
+      tableHTML += `<tr style="background: ${bgColor};"><td style="border: 1px solid #ddd; padding: 10px;">${item.case_id}</td><td style="border: 1px solid #ddd; padding: 10px;">${item.sku}</td><td style="border: 1px solid #ddd; padding: 10px;">${item.dealer}</td><td style="border: 1px solid #ddd; padding: 10px;">${item.sort_group}</td><td style="border: 1px solid #ddd; padding: 10px;">${item.qty}</td><td style="border: 1px solid #ddd; padding: 10px; font-weight: bold;">${status}</td></tr>`;
+    });
+    tableHTML += '</table>';
     
     // Send email
     const transporter = nodemailer.createTransport({
@@ -274,14 +291,20 @@ app.post('/api/sessions/:id/complete', async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: 'jongwonkim93@gmail.com',
-      subject: `Sorting Complete: ${session.name}`,
+      subject: `Sorting Session Report: ${session.name}`,
       html: `
-        <h2>Sorting Session Completed</h2>
+        <h2>Warehouse Sorting Session Report</h2>
         <p><strong>Session:</strong> ${session.name}</p>
-        <p><strong>Total Items:</strong> ${total}</p>
-        <p><strong>Items Sorted:</strong> ${completed}</p>
-        <p><strong>Completion:</strong> ${Math.round((completed / total) * 100)}%</p>
         <p><strong>Date:</strong> ${new Date(session.created_at).toLocaleString()}</p>
+        
+        <h3 style="margin-top: 20px;">Summary</h3>
+        <p><strong>Total Items:</strong> ${total}</p>
+        <p><strong>Completed:</strong> <span style="color: green; font-weight: bold;">${completed} ✓</span></p>
+        <p><strong>Incomplete:</strong> <span style="color: red; font-weight: bold;">${total - completed} ✗</span></p>
+        <p><strong>Completion Rate:</strong> <span style="font-size: 20px; font-weight: bold; color: ${Math.round((completed / total) * 100) === 100 ? 'green' : 'orange'};">${Math.round((completed / total) * 100)}%</span></p>
+        
+        <h3 style="margin-top: 20px;">Detailed Items</h3>
+        ${tableHTML}
       `
     };
     
