@@ -4,6 +4,7 @@ import Sessions from './pages/Sessions';
 import Upload from './pages/Upload';
 import Scan from './pages/Scan';
 import Progress from './pages/Progress';
+import Dealers from './pages/Dealers'; // ✅ ADDED: was missing
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('sessions');
@@ -67,6 +68,13 @@ export default function App() {
       case 'progress':
         return (
           <Progress
+            sessionId={activeSession}
+            sessions={sessions}
+          />
+        );
+      case 'dealers': // ✅ ADDED: was missing — caused blank page
+        return (
+          <Dealers
             sessionId={activeSession}
             sessions={sessions}
           />
