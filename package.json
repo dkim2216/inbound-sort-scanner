@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "node --watch server.js",
     "client:dev": "vite",
-    "build": "vite build && node build-server.js",
+    "build": "vite build",
     "start": "NODE_ENV=production node server.js",
     "test": "vitest"
   },
@@ -16,8 +16,8 @@
     "multer": "^1.4.5-lts.1",
     "csv-parse": "^5.5.0",
     "pg": "^8.10.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "axios": "^1.6.0",
     "lucide-react": "^0.263.1"
   },
@@ -27,7 +27,6 @@
     "tailwindcss": "^3.3.0",
     "postcss": "^8.4.31",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.0",
-    "vitest": "^1.0.0"
+    "concurrently": "^8.2.0"
   }
 }
