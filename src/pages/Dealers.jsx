@@ -17,13 +17,16 @@ export default function Dealers({ sessionId, sessions }) {
   const fetchDealerSummary = async () => {
     try {
       setLoading(true);
+      setMessage(null);
       const res = await fetch(`/api/sessions/${sessionId}/dealer-summary`);
       if (!res.ok) throw new Error('Failed to load dealer summary');
       const data = await res.json();
-      setDealers(data);
-      setMessage(null);
+      console.log('Dealer data:', data);
+      setDealers(data || []);
     } catch (err) {
+      console.error('Error:', err);
       setMessage({ type: 'error', text: err.message });
+      setDealers([]);
     } finally {
       setLoading(false);
     }
@@ -90,35 +93,35 @@ export default function Dealers({ sessionId, sessions }) {
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <p className="text-gray-600 text-sm">Total Groups</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">
-                {dealers.reduce((sum, d) => sum + d.groups.length, 0)}
+                {dealers.reduce((sum, d) => sum + (d.groups ? d.groups.length : 0), 0)}
               </p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <p className="text-gray-600 text-sm">Total Quantity</p>
               <p className="text-3xl font-bold text-green-600 mt-2">
-                {dealers.reduce((sum, d) => sum + d.totalQty, 0)}
+                {dealers.reduce((sum, d) => sum + (d.totalQty || 0), 0)}
               </p>
             </div>
           </div>
 
           {/* Dealer Cards */}
-          {dealers.map(dealer => (
-            <div key={dealer.name} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {dealers.map((dealer, idx) => (
+            <div key={idx} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               {/* Dealer Header */}
               <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 p-6">
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900">{dealer.name}</h3>
                 <div className="flex flex-col md:flex-row gap-4 md:gap-8 mt-4 text-sm">
                   <div>
                     <p className="text-gray-600">Groups</p>
-                    <p className="text-2xl font-bold text-blue-600">{dealer.groups.length}</p>
+                    <p className="text-2xl font-bold text-blue-600">{dealer.groups ? dealer.groups.length : 0}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Cases</p>
-                    <p className="text-2xl font-bold text-purple-600">{dealer.cases.length}</p>
+                    <p className="text-2xl font-bold text-purple-600">{dealer.cases ? dealer.cases.length : 0}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Total Quantity</p>
-                    <p className="text-2xl font-bold text-green-600">{dealer.totalQty}</p>
+                    <p className="text-2xl font-bold text-green-600">{dealer.totalQty || 0}</p>
                   </div>
                 </div>
               </div>
@@ -126,38 +129,46 @@ export default function Dealers({ sessionId, sessions }) {
               {/* Dealer Content */}
               <div className="p-6">
                 {/* Groups Section */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Sort Groups</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {dealer.groups.map(group => (
-                      <div key={group} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="font-bold text-blue-700 text-lg">{group}</p>
-                      </div>
-                    ))}
+                {dealer.groups && dealer.groups.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Sort Groups</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {dealer.groups.map((group, gIdx) => (
+                        <div key={gIdx} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <p className="font-bold text-blue-700 text-lg">{group}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Cases Section */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Cases & Items</h4>
-                  <div className="space-y-3">
-                    {dealer.cases.map((caseItem, idx) => (
-                      <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
-                          <div>
-                            <p className="font-bold text-gray-900">Case: <span className="text-blue-600">{caseItem.case_id}</span></p>
-                            <p className="text-sm text-gray-600 mt-1">SKU: <span className="font-medium">{caseItem.sku}</span></p>
-                            <p className="text-sm text-gray-600">Group: <span className="font-medium">{caseItem.sort_group}</span></p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">Quantity</p>
-                            <p className="text-2xl font-bold text-green-600">{caseItem.qty}</p>
+                {dealer.cases && dealer.cases.length > 0 && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Cases & Items</h4>
+                    <div className="space-y-3">
+                      {dealer.cases.map((caseItem, cIdx) => (
+                        <div key={cIdx} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
+                            <div>
+                              <p className="font-bold text-gray-900">Case: <span className="text-blue-600">{caseItem.case_id}</span></p>
+                              <p className="text-sm text-gray-600 mt-1">SKU: <span className="font-medium">{caseItem.sku}</span></p>
+                              <p className="text-sm text-gray-600">Group: <span className="font-medium">{caseItem.sort_group}</span></p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-600">Quantity</p>
+                              <p className="text-2xl font-bold text-green-600">{caseItem.qty}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {(!dealer.cases || dealer.cases.length === 0) && (!dealer.groups || dealer.groups.length === 0) && (
+                  <p className="text-gray-600 text-center py-4">No data available for this dealer</p>
+                )}
               </div>
             </div>
           ))}
