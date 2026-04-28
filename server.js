@@ -6,6 +6,7 @@ import pg from 'pg';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import nodemailer from 'nodemailer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -217,6 +218,84 @@ app.get('/api/sessions/:id/progress', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Get case progress
+app.get('/api/sessions/:id/case-progress', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        case_id,
+        COUNT(*) as total,
+        SUM(CASE WHEN done THEN 1 ELSE 0 END) as completed
+       FROM manifest WHERE session_id = $1
+       GROUP BY case_id
+       ORDER BY case_id`,
+      [req.params.id]
+    );
+    res.json(result.rows.map(row => ({
+      case_id: row.case_id,
+      total: parseInt(row.total),
+      completed: parseInt(row.completed) || 0,
+      percentage: parseInt(row.total) > 0 ? Math.round((parseInt(row.completed) / parseInt(row.total)) * 100) : 0
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send completion email
+app.post('/api/sessions/:id/complete', async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    
+    // Get session details
+    const sessionResult = await pool.query('SELECT * FROM sessions WHERE id = $1', [sessionId]);
+    if (sessionResult.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
+    const session = sessionResult.rows[0];
+    
+    // Get progress
+    const progressResult = await pool.query(
+      `SELECT COUNT(*) as total, SUM(CASE WHEN done THEN 1 ELSE 0 END) as completed
+       FROM manifest WHERE session_id = $1`,
+      [sessionId]
+    );
+    const { total, completed } = progressResult.rows[0];
+    
+    // Send email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: 'jongwonkim93@gmail.com',
+      subject: `Sorting Complete: ${session.name}`,
+      html: `
+        <h2>Sorting Session Completed</h2>
+        <p><strong>Session:</strong> ${session.name}</p>
+        <p><strong>Total Items:</strong> ${total}</p>
+        <p><strong>Items Sorted:</strong> ${completed}</p>
+        <p><strong>Completion:</strong> ${Math.round((completed / total) * 100)}%</p>
+        <p><strong>Date:</strong> ${new Date(session.created_at).toLocaleString()}</p>
+      `
+    };
+    
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: 'Email sent' });
+  } catch (err) {
+    console.error('Email error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // SPA fallback - serve index.html for all other routes
