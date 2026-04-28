@@ -104,23 +104,6 @@ export default function Scan({ sessionId, sessions }) {
     }
   };
 
-  const handleComplete = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/sessions/${sessionId}/complete`, { method: 'POST' });
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Completion email sent!' });
-        setTimeout(() => {
-          handleReset();
-        }, 2000);
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to send email' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleReset = () => {
     setStep(1);
     setSelectedCase('');
@@ -263,7 +246,7 @@ export default function Scan({ sessionId, sessions }) {
             </button>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3">
             {destinations.map(dest => (
               <div
                 key={dest.id}
@@ -303,15 +286,6 @@ export default function Scan({ sessionId, sessions }) {
               </div>
             ))}
           </div>
-
-          {/* Complete Button */}
-          <button
-            onClick={handleComplete}
-            disabled={loading || destinations.some(d => !d.done)}
-            className="w-full bg-green-600 text-white py-3 md:py-4 rounded-lg font-bold text-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Sending Email...' : 'Complete & Send Email'}
-          </button>
         </div>
       )}
     </div>
