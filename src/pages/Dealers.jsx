@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, RefreshCw, ChevronRight, ArrowLeft, Users, Layers, Package, CheckCircle, Clock } from 'lucide-react';
 
+const CS_TEAL = '#00C9A7';
+const CS_NAVY = '#0D1B4B';
+const CS_LIGHT = '#E6FAF7';
+
 export default function Dealers({ sessionId, sessions }) {
   const [dealers, setDealers] = useState([]);
   const [caseProgress, setCaseProgress] = useState({});
@@ -29,7 +33,6 @@ export default function Dealers({ sessionId, sessions }) {
       if (!dealerRes.ok) throw new Error('Failed to load dealer summary');
       const dealerData  = await dealerRes.json();
       const progressData = progressRes.ok ? await progressRes.json() : [];
-
       setDealers(dealerData || []);
       const map = {};
       progressData.forEach(item => { map[item.case_id] = item; });
@@ -43,7 +46,6 @@ export default function Dealers({ sessionId, sessions }) {
   };
 
   // ── Status helpers ────────────────────────────────────────────
-
   const getCaseStatus = (caseId) => {
     const p = caseProgress[caseId];
     if (!p) return 'pending';
@@ -54,16 +56,16 @@ export default function Dealers({ sessionId, sessions }) {
 
   const getAggregateStatus = (caseIds) => {
     if (!caseIds.length) return 'pending';
-    const statuses = caseIds.map(getCaseStatus);
-    if (statuses.every(s => s === 'completed')) return 'completed';
-    if (statuses.some(s => s === 'completed' || s === 'in-progress')) return 'in-progress';
+    const s = caseIds.map(getCaseStatus);
+    if (s.every(x => x === 'completed')) return 'completed';
+    if (s.some(x => x === 'completed' || x === 'in-progress')) return 'in-progress';
     return 'pending';
   };
 
   const STATUS = {
-    completed:    { card: 'bg-green-50 border-green-400',   badge: 'bg-green-100 text-green-700',   label: 'Complete',    Icon: CheckCircle },
-    'in-progress':{ card: 'bg-yellow-50 border-yellow-400', badge: 'bg-yellow-100 text-yellow-700', label: 'In Progress', Icon: Clock },
-    pending:      { card: 'bg-white border-gray-200',       badge: null,                            label: null,          Icon: null },
+    completed:    { card: { background: '#F0FDF4', borderColor: '#4ADE80' }, badge: { background: '#DCFCE7', color: '#15803D' }, label: 'Complete',     Icon: CheckCircle },
+    'in-progress':{ card: { background: '#FEFCE8', borderColor: '#FACC15' }, badge: { background: '#FEF9C3', color: '#A16207' }, label: 'In Progress',  Icon: Clock },
+    pending:      { card: { background: 'white',   borderColor: '#E5E7EB' }, badge: null,                                        label: null,            Icon: null },
   };
 
   const StatusBadge = ({ status }) => {
@@ -71,7 +73,7 @@ export default function Dealers({ sessionId, sessions }) {
     if (!s.badge) return null;
     const Icon = s.Icon;
     return (
-      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${s.badge}`}>
+      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={s.badge}>
         <Icon size={11} />{s.label}
       </span>
     );
@@ -95,48 +97,64 @@ export default function Dealers({ sessionId, sessions }) {
   if (!sessionId) {
     return (
       <div className="p-8 text-center">
-        <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600">Please select a session first</p>
+        <AlertCircle size={48} className="mx-auto text-gray-300 mb-4" />
+        <p className="text-gray-500">Please select a session first</p>
       </div>
     );
   }
 
   const Breadcrumb = () => (
-    <nav className="flex items-center gap-1 text-sm text-gray-500 mb-6 flex-wrap">
+    <nav className="flex items-center gap-1 text-sm text-gray-400 mb-6 flex-wrap">
       <button onClick={() => { setSelectedDealer(null); setSelectedGroup(null); }}
-        className={`hover:text-blue-600 transition-colors ${!selectedDealer ? 'text-gray-900 font-semibold' : ''}`}>
+        className="hover:underline transition-colors"
+        style={!selectedDealer ? { color: CS_NAVY, fontWeight: 700 } : {}}>
         All Dealers
       </button>
       {selectedDealer && (<>
-        <ChevronRight size={14} />
+        <ChevronRight size={13} />
         <button onClick={() => setSelectedGroup(null)}
-          className={`hover:text-blue-600 transition-colors ${!selectedGroup ? 'text-gray-900 font-semibold' : ''}`}>
+          className="hover:underline transition-colors"
+          style={!selectedGroup ? { color: CS_NAVY, fontWeight: 700 } : {}}>
           {selectedDealer.name}
         </button>
       </>)}
       {selectedGroup && (<>
-        <ChevronRight size={14} />
-        <span className="text-gray-900 font-semibold">{selectedGroup}</span>
+        <ChevronRight size={13} />
+        <span style={{ color: CS_NAVY, fontWeight: 700 }}>{selectedGroup}</span>
       </>)}
     </nav>
   );
 
-  const StatusMessage = () => (
+  const StatusMsg = () => (
     <>
       {message && (
-        <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
           message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200'
                                      : 'bg-red-50 text-red-800 border border-red-200'}`}>
-          <AlertCircle size={20} /><p>{message.text}</p>
+          <AlertCircle size={18} /><p className="text-sm">{message.text}</p>
         </div>
       )}
       {loading && (
         <div className="text-center py-16">
-          <div className="inline-block animate-spin"><RefreshCw size={32} className="text-blue-600" /></div>
-          <p className="text-gray-600 mt-4">Loading...</p>
+          <RefreshCw size={30} className="mx-auto animate-spin" style={{ color: CS_TEAL }} />
+          <p className="text-gray-400 mt-4 text-sm">Loading...</p>
         </div>
       )}
     </>
+  );
+
+  const PageHeader = () => (
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold" style={{ color: CS_NAVY }}>Dealer Summary</h2>
+        <p className="text-gray-500 mt-1">Session: <span className="font-semibold">{sessionName}</span></p>
+      </div>
+      <button onClick={fetchAll} disabled={loading}
+        className="flex items-center justify-center gap-2 text-white px-4 py-2 rounded-xl disabled:opacity-50 font-medium"
+        style={{ background: CS_TEAL }}>
+        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+      </button>
+    </div>
   );
 
   // ══════════════════════════════════════════════════════════════
@@ -149,39 +167,39 @@ export default function Dealers({ sessionId, sessions }) {
 
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
-        <PageHeader sessionName={sessionName} onRefresh={fetchAll} loading={loading} />
+        <PageHeader />
         <Breadcrumb />
-        <button onClick={goBack} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium">
-          <ArrowLeft size={18} /> Back to {selectedDealer.name}
+        <button onClick={goBack} className="flex items-center gap-2 mb-6 font-medium text-sm" style={{ color: CS_TEAL }}>
+          <ArrowLeft size={16} /> Back to {selectedDealer.name}
         </button>
 
-        <div className={`border-2 rounded-xl p-6 mb-6 ${STATUS[st].card}`}>
+        <div className="border-2 rounded-2xl p-6 mb-6" style={STATUS[st].card}>
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
-              <Package size={22} className="text-purple-600" />
-              <h3 className="text-xl font-bold text-gray-900">{selectedGroup}</h3>
+              <Package size={20} style={{ color: CS_TEAL }} />
+              <h3 className="text-xl font-bold" style={{ color: CS_NAVY }}>{selectedGroup}</h3>
             </div>
             <StatusBadge status={st} />
           </div>
-          <p className="text-gray-600 text-sm ml-9">
-            {cases.length} item{cases.length !== 1 ? 's' : ''} · Total qty: <span className="font-semibold text-purple-700">{totalQty}</span>
+          <p className="text-gray-500 text-sm ml-9">
+            {cases.length} item{cases.length !== 1 ? 's' : ''} · Total qty: <span className="font-semibold" style={{ color: CS_TEAL }}>{totalQty}</span>
           </p>
         </div>
 
-        <StatusMessage />
+        <StatusMsg />
 
         {!loading && (cases.length === 0 ? <EmptyState message="No cases found in this group" /> : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Case ID</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">SKU</th>
-                  <th className="text-left px-5 py-3 font-semibold text-gray-600">Status</th>
-                  <th className="text-right px-5 py-3 font-semibold text-gray-600">Qty</th>
+                <tr className="border-b border-gray-100" style={{ background: '#FAFAFA' }}>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Case ID</th>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">SKU</th>
+                  <th className="text-left px-5 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Status</th>
+                  <th className="text-right px-5 py-3 font-semibold text-gray-400 text-xs uppercase tracking-wide">Qty</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {cases.map((c, i) => {
                   const cst = getCaseStatus(c.case_id);
                   const p   = caseProgress[c.case_id];
@@ -189,14 +207,12 @@ export default function Dealers({ sessionId, sessions }) {
                     <tr key={i} className={`transition-colors ${
                       cst === 'completed' ? 'bg-green-50' : cst === 'in-progress' ? 'bg-yellow-50' : 'hover:bg-gray-50'
                     }`}>
-                      <td className="px-5 py-3.5 font-medium text-blue-700">{c.case_id}</td>
-                      <td className="px-5 py-3.5 text-gray-700">{c.sku}</td>
+                      <td className="px-5 py-3.5 font-semibold" style={{ color: CS_TEAL }}>{c.case_id}</td>
+                      <td className="px-5 py-3.5 text-gray-600">{c.sku}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
                           <StatusBadge status={cst} />
-                          {p && cst !== 'completed' && (
-                            <span className="text-xs text-gray-400">{p.completed}/{p.total}</span>
-                          )}
+                          {p && cst !== 'completed' && <span className="text-xs text-gray-300">{p.completed}/{p.total}</span>}
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-right font-bold text-green-600">{c.qty}</td>
@@ -205,9 +221,9 @@ export default function Dealers({ sessionId, sessions }) {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-50 border-t border-gray-200">
-                  <td className="px-5 py-3 font-semibold text-gray-700" colSpan={3}>Total</td>
-                  <td className="px-5 py-3 text-right font-bold text-green-700">{totalQty}</td>
+                <tr className="border-t border-gray-100" style={{ background: '#FAFAFA' }}>
+                  <td className="px-5 py-3 font-semibold text-gray-500" colSpan={3}>Total</td>
+                  <td className="px-5 py-3 text-right font-bold text-green-600">{totalQty}</td>
                 </tr>
               </tfoot>
             </table>
@@ -221,55 +237,56 @@ export default function Dealers({ sessionId, sessions }) {
   // LEVEL 2 — Sort Groups inside a Dealer
   // ══════════════════════════════════════════════════════════════
   if (selectedDealer) {
-    const groups     = groupsForDealer(selectedDealer);
-    const dealerSt   = getAggregateStatus(allCaseIds(selectedDealer));
+    const groups   = groupsForDealer(selectedDealer);
+    const dealerSt = getAggregateStatus(allCaseIds(selectedDealer));
 
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
-        <PageHeader sessionName={sessionName} onRefresh={fetchAll} loading={loading} />
+        <PageHeader />
         <Breadcrumb />
-        <button onClick={goBack} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6 font-medium">
-          <ArrowLeft size={18} /> Back to All Dealers
+        <button onClick={goBack} className="flex items-center gap-2 mb-6 font-medium text-sm" style={{ color: CS_TEAL }}>
+          <ArrowLeft size={16} /> Back to All Dealers
         </button>
 
-        <div className={`border-2 rounded-xl p-6 mb-6 ${STATUS[dealerSt].card}`}>
+        <div className="border-2 rounded-2xl p-6 mb-6" style={STATUS[dealerSt].card}>
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
-              <Users size={22} className="text-blue-600" />
-              <h3 className="text-2xl font-bold text-gray-900">{selectedDealer.name}</h3>
+              <Users size={20} style={{ color: CS_TEAL }} />
+              <h3 className="text-2xl font-bold" style={{ color: CS_NAVY }}>{selectedDealer.name}</h3>
             </div>
             <StatusBadge status={dealerSt} />
           </div>
-          <div className="flex gap-6 mt-3 ml-9 text-sm text-gray-600">
-            <span><span className="font-bold text-blue-700">{groups.length}</span> group{groups.length !== 1 ? 's' : ''}</span>
-            <span><span className="font-bold text-green-700">{selectedDealer.totalQty || 0}</span> total qty</span>
+          <div className="flex gap-5 mt-3 ml-9 text-sm text-gray-500">
+            <span><span className="font-bold" style={{ color: CS_NAVY }}>{groups.length}</span> group{groups.length !== 1 ? 's' : ''}</span>
+            <span><span className="font-bold text-green-600">{selectedDealer.totalQty || 0}</span> total qty</span>
           </div>
         </div>
 
-        <StatusMessage />
+        <StatusMsg />
 
         {!loading && (groups.length === 0 ? <EmptyState message="No sort groups found for this dealer" /> : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.map((group, i) => {
-              const cases  = casesForGroup(selectedDealer, group);
-              const qty    = totalQtyForGroup(selectedDealer, group);
-              const gst    = getAggregateStatus(caseIdsForGroup(selectedDealer, group));
+              const cases = casesForGroup(selectedDealer, group);
+              const qty   = totalQtyForGroup(selectedDealer, group);
+              const gst   = getAggregateStatus(caseIdsForGroup(selectedDealer, group));
               return (
                 <button key={i} onClick={() => goToGroup(group)}
-                  className={`text-left border-2 rounded-xl p-5 hover:shadow-md transition-all group ${STATUS[gst].card}`}>
+                  className="text-left border-2 rounded-2xl p-5 hover:shadow-md transition-all group"
+                  style={STATUS[gst].card}>
                   <div className="flex items-start justify-between mb-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <Layers size={18} className="text-purple-600" />
+                    <div className="p-2 rounded-xl" style={{ background: CS_LIGHT }}>
+                      <Layers size={17} style={{ color: CS_TEAL }} />
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={gst} />
-                      <ChevronRight size={18} className="text-gray-300 group-hover:text-purple-500 transition-colors" />
+                      <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                     </div>
                   </div>
-                  <p className="font-bold text-gray-900 text-lg">{group}</p>
-                  <div className="mt-2 flex gap-4 text-sm text-gray-500">
+                  <p className="font-bold text-lg" style={{ color: CS_NAVY }}>{group}</p>
+                  <div className="mt-2 flex gap-4 text-xs text-gray-400">
                     <span>{cases.length} item{cases.length !== 1 ? 's' : ''}</span>
-                    <span className="text-green-600 font-semibold">Qty: {qty}</span>
+                    <span className="font-semibold text-green-600">Qty: {qty}</span>
                   </div>
                 </button>
               );
@@ -288,27 +305,32 @@ export default function Dealers({ sessionId, sessions }) {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <PageHeader sessionName={sessionName} onRefresh={fetchAll} loading={loading} />
-      <StatusMessage />
+      <PageHeader />
+      <StatusMsg />
 
-      {!loading && dealers.length === 0 && !message && (
-        <EmptyState message="This session doesn't have any dealers assigned" />
-      )}
+      {!loading && dealers.length === 0 && !message && <EmptyState message="This session doesn't have any dealers assigned" />}
 
       {!loading && dealers.length > 0 && (<>
-        {/* Summary stats */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Total Dealers" value={dealers.length}   color="blue" />
-          <StatCard label="Complete"       value={completedCount}   color="green" />
-          <StatCard label="In Progress"    value={inProgressCount}  color="yellow" />
-          <StatCard label="Total Qty"      value={dealers.reduce((s, d) => s + (d.totalQty || 0), 0)} color="purple" />
+          {[
+            { label: 'Total Dealers', value: dealers.length,  color: CS_NAVY },
+            { label: 'Complete',       value: completedCount,  color: '#16A34A' },
+            { label: 'In Progress',    value: inProgressCount, color: '#D97706' },
+            { label: 'Total Qty',      value: dealers.reduce((s, d) => s + (d.totalQty || 0), 0), color: CS_TEAL },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">{label}</p>
+              <p className="text-3xl font-black mt-1.5" style={{ color }}>{value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-5 mb-4 text-xs text-gray-500">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-400 inline-block" /> Complete</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> In Progress</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-gray-300 inline-block" /> Pending</span>
+        <div className="flex items-center gap-5 mb-4 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" /> Complete</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" /> In Progress</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 inline-block" /> Pending</span>
         </div>
 
         {/* Dealer cards */}
@@ -317,25 +339,26 @@ export default function Dealers({ sessionId, sessions }) {
             const st = getAggregateStatus(allCaseIds(dealer));
             return (
               <button key={i} onClick={() => goToDealer(dealer)}
-                className={`text-left border-2 rounded-xl p-6 hover:shadow-md transition-all group ${STATUS[st].card}`}>
+                className="text-left border-2 rounded-2xl p-6 hover:shadow-md transition-all group"
+                style={STATUS[st].card}>
                 <div className="flex items-start justify-between mb-4">
-                  <div className="bg-blue-100 p-2.5 rounded-lg">
-                    <Users size={20} className="text-blue-600" />
+                  <div className="p-2.5 rounded-xl" style={{ background: CS_LIGHT }}>
+                    <Users size={18} style={{ color: CS_TEAL }} />
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={st} />
-                    <ChevronRight size={18} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                   </div>
                 </div>
-                <p className="font-bold text-gray-900 text-xl mb-3">{dealer.name}</p>
-                <div className="space-y-1.5 text-sm text-gray-500">
+                <p className="font-bold text-xl mb-3" style={{ color: CS_NAVY }}>{dealer.name}</p>
+                <div className="space-y-1.5 text-xs text-gray-400">
                   <div className="flex justify-between">
                     <span>Sort Groups</span>
-                    <span className="font-semibold text-purple-600">{dealer.groups ? dealer.groups.length : 0}</span>
+                    <span className="font-bold" style={{ color: CS_TEAL }}>{dealer.groups ? dealer.groups.length : 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Total Qty</span>
-                    <span className="font-semibold text-green-600">{dealer.totalQty || 0}</span>
+                    <span className="font-bold text-green-600">{dealer.totalQty || 0}</span>
                   </div>
                 </div>
               </button>
@@ -347,37 +370,11 @@ export default function Dealers({ sessionId, sessions }) {
   );
 }
 
-function PageHeader({ sessionName, onRefresh, loading }) {
-  return (
-    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-      <div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Dealer Summary</h2>
-        <p className="text-gray-600 mt-1">Session: <span className="font-semibold">{sessionName}</span></p>
-      </div>
-      <button onClick={onRefresh} disabled={loading}
-        className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-        Refresh
-      </button>
-    </div>
-  );
-}
-
-function StatCard({ label, value, color }) {
-  const colors = { blue: 'text-blue-600', purple: 'text-purple-600', green: 'text-green-600', yellow: 'text-yellow-600' };
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <p className="text-gray-600 text-sm">{label}</p>
-      <p className={`text-3xl font-bold mt-2 ${colors[color]}`}>{value}</p>
-    </div>
-  );
-}
-
 function EmptyState({ message }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-      <AlertCircle size={48} className="mx-auto text-gray-300 mb-4" />
-      <p className="text-gray-500">{message}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+      <AlertCircle size={44} className="mx-auto text-gray-200 mb-4" />
+      <p className="text-gray-400">{message}</p>
     </div>
   );
 }
