@@ -5,20 +5,20 @@ const CS_TEAL  = '#00C9A7';
 const CS_NAVY  = '#0D1B4B';
 const CS_LIGHT = '#E6FAF7'; // teal tint for active bg
 
-// ── Recreated Cello Square logo mark (SVG) ────────────────────
-const LogoMark = ({ size = 36 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-    <rect width="40" height="40" rx="7" fill={CS_TEAL} />
-    {/* White curved arc — matches the logo's smile/arrow shape */}
-    <path
-      d="M10 30 Q14 18 28 16"
-      stroke="white"
-      strokeWidth="4.5"
-      strokeLinecap="round"
-      fill="none"
-    />
-  </svg>
-);
+// ── Recreated Cello Square logo mark (SVG) 아래 // 지워 로고 사용하고 싶으면────────────────────
+// const LogoMark = ({ size = 36 }) => (
+  // <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+    // <rect width="40" height="40" rx="7" fill={CS_TEAL} />
+    // {/* White curved arc — matches the logo's smile/arrow shape */}
+    // <path
+     //  d="M10 30 Q14 18 28 16"
+      // stroke="white"
+      // strokeWidth="4.5"
+      // strokeLinecap="round"
+      // fill="none"
+    // />
+  // </svg>
+// );
 
 const menuItems = [
   { id: 'sessions',  label: 'Sessions',  icon: List },
@@ -53,9 +53,9 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
           <LogoMark size={38} />
           <div>
             <h1 className="text-lg font-bold leading-tight" style={{ color: CS_NAVY }}>
-              Cello Square
+              Inbound Hub Scanner
             </h1>
-            <p className="text-xs text-gray-400 font-medium tracking-wide">Inbound Hub Scanner</p>
+            <p className="text-xs text-gray-400 font-medium tracking-wide">Cello Square</p>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
         {/* Footer / Copyright */}
         <div className="p-5 border-t border-gray-100">
           <div className="flex items-center gap-2 mb-2">
-            <LogoMark size={20} />
+           // <LogoMark size={20} />
             <span className="text-xs font-semibold" style={{ color: CS_NAVY }}>Cello Square</span>
           </div>
           <p className="text-[10px] text-gray-400 leading-relaxed">
