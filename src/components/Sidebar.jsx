@@ -1,24 +1,9 @@
 import { Upload, ScanLine, BarChart3, List, Users } from 'lucide-react';
 
-// ── Cello Square brand colors ──────────────────────────────────
+// ── Brand colors ──────────────────────────────────
 const CS_TEAL  = '#00C9A7';
 const CS_NAVY  = '#0D1B4B';
-const CS_LIGHT = '#E6FAF7'; // teal tint for active bg
-
-// ── Recreated Cello Square logo mark (SVG) 아래 // 지워 로고 사용하고 싶으면────────────────────
-// const LogoMark = ({ size = 36 }) => (
-  // <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-    // <rect width="40" height="40" rx="7" fill={CS_TEAL} />
-    // {/* White curved arc — matches the logo's smile/arrow shape */}
-    // <path
-     //  d="M10 30 Q14 18 28 16"
-      // stroke="white"
-      // strokeWidth="4.5"
-      // strokeLinecap="round"
-      // fill="none"
-    // />
-  // </svg>
-// );
+const CS_LIGHT = '#E6FAF7';
 
 const menuItems = [
   { id: 'sessions',  label: 'Sessions',  icon: List },
@@ -48,15 +33,12 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
         className="hidden lg:flex flex-col w-64 h-screen border-r border-gray-100"
         style={{ background: '#FAFCFB' }}
       >
-        {/* Header / Logo */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-          <LogoMark size={38} />
-          <div>
-            <h1 className="text-lg font-bold leading-tight" style={{ color: CS_NAVY }}>
-              Inbound Hub Scanner
-            </h1>
-            <p className="text-xs text-gray-400 font-medium tracking-wide">Cello Square</p>
-          </div>
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h1 className="text-lg font-bold leading-tight" style={{ color: CS_NAVY }}>
+            Cello Square
+          </h1>
+          <p className="text-xs text-gray-400 font-medium tracking-wide">Inbound Hub Scanner</p>
         </div>
 
         {/* Navigation */}
@@ -83,7 +65,6 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
                   if (!isActive && !disabled) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                {/* Active indicator bar */}
                 <span
                   className="w-1 h-5 rounded-full flex-shrink-0 transition-all"
                   style={{ background: isActive ? CS_TEAL : 'transparent' }}
@@ -95,12 +76,9 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
           })}
         </nav>
 
-        {/* Footer / Copyright */}
+        {/* Footer */}
         <div className="p-5 border-t border-gray-100">
-          <div className="flex items-center gap-2 mb-2">
-           // <LogoMark size={20} />
-            <span className="text-xs font-semibold" style={{ color: CS_NAVY }}>Cello Square</span>
-          </div>
+          <p className="text-xs font-semibold mb-2" style={{ color: CS_NAVY }}>Cello Square</p>
           <p className="text-[10px] text-gray-400 leading-relaxed">
             © 2026 Made by{' '}
             <span className="font-semibold" style={{ color: CS_TEAL }}>kim.jongwon</span>
@@ -132,7 +110,6 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
                   : { color: '#9CA3AF' }
               }
             >
-              {/* Top active indicator */}
               {isActive && (
                 <span
                   className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
