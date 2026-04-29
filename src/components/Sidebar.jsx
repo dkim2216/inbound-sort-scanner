@@ -1,5 +1,24 @@
-import { Menu, X, Upload, ScanLine, BarChart3, List, Users } from 'lucide-react';
-import { useState } from 'react';
+import { Upload, ScanLine, BarChart3, List, Users } from 'lucide-react';
+
+// ── Cello Square brand colors ──────────────────────────────────
+const CS_TEAL  = '#00C9A7';
+const CS_NAVY  = '#0D1B4B';
+const CS_LIGHT = '#E6FAF7'; // teal tint for active bg
+
+// ── Recreated Cello Square logo mark (SVG) ────────────────────
+const LogoMark = ({ size = 36 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+    <rect width="40" height="40" rx="7" fill={CS_TEAL} />
+    {/* White curved arc — matches the logo's smile/arrow shape */}
+    <path
+      d="M10 30 Q14 18 28 16"
+      stroke="white"
+      strokeWidth="4.5"
+      strokeLinecap="round"
+      fill="none"
+    />
+  </svg>
+);
 
 const menuItems = [
   { id: 'sessions',  label: 'Sessions',  icon: List },
@@ -10,56 +29,93 @@ const menuItems = [
 ];
 
 export default function Sidebar({ currentPage, onPageChange, activeSession }) {
-  const [isOpen, setIsOpen] = useState(false); // closed by default on mobile
-
-  const handleNavigate = (id) => {
-    const item = menuItems.find(m => m.id === id);
-    if (item?.disabled) return;
-    onPageChange(id);
-    setIsOpen(false); // always close after navigation
-  };
-
   const items = menuItems.map(item => ({
     ...item,
     disabled: ['scan', 'progress', 'dealers'].includes(item.id) && !activeSession,
   }));
+
+  const handleNavigate = (id) => {
+    const item = items.find(m => m.id === id);
+    if (!item?.disabled) onPageChange(id);
+  };
 
   return (
     <>
       {/* ════════════════════════════════════════
           DESKTOP — permanent sidebar (lg+)
       ════════════════════════════════════════ */}
-      <div className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 h-screen">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-blue-600">Sort Scanner</h1>
-          <p className="text-sm text-gray-500 mt-1">Warehouse Sorting</p>
+      <div
+        className="hidden lg:flex flex-col w-64 h-screen border-r border-gray-100"
+        style={{ background: '#FAFCFB' }}
+      >
+        {/* Header / Logo */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <LogoMark size={38} />
+          <div>
+            <h1 className="text-lg font-bold leading-tight" style={{ color: CS_NAVY }}>
+              Cello Square
+            </h1>
+            <p className="text-xs text-gray-400 font-medium tracking-wide">Inbound Hub Scanner</p>
+          </div>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
-          {items.map(({ id, label, icon: Icon, disabled }) => (
-            <button
-              key={id}
-              onClick={() => handleNavigate(id)}
-              disabled={disabled}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                currentPage === id
-                  ? 'bg-blue-600 text-white'
-                  : disabled
-                  ? 'text-gray-300 cursor-not-allowed'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <Icon size={20} />
-              <span className="font-medium">{label}</span>
-            </button>
-          ))}
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1">
+          {items.map(({ id, label, icon: Icon, disabled }) => {
+            const isActive = currentPage === id;
+            return (
+              <button
+                key={id}
+                onClick={() => handleNavigate(id)}
+                disabled={disabled}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium"
+                style={
+                  isActive
+                    ? { background: CS_LIGHT, color: CS_TEAL, fontWeight: 700 }
+                    : disabled
+                    ? { color: '#CBD5E1', cursor: 'not-allowed' }
+                    : { color: '#4B5563' }
+                }
+                onMouseEnter={e => {
+                  if (!isActive && !disabled) e.currentTarget.style.background = '#F3F4F6';
+                }}
+                onMouseLeave={e => {
+                  if (!isActive && !disabled) e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {/* Active indicator bar */}
+                <span
+                  className="w-1 h-5 rounded-full flex-shrink-0 transition-all"
+                  style={{ background: isActive ? CS_TEAL : 'transparent' }}
+                />
+                <Icon size={19} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </nav>
-        <div className="p-4 border-t border-gray-200 text-xs text-gray-500">v1.0.0</div>
+
+        {/* Footer / Copyright */}
+        <div className="p-5 border-t border-gray-100">
+          <div className="flex items-center gap-2 mb-2">
+            <LogoMark size={20} />
+            <span className="text-xs font-semibold" style={{ color: CS_NAVY }}>Cello Square</span>
+          </div>
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            © 2026 Made by{' '}
+            <span className="font-semibold" style={{ color: CS_TEAL }}>kim.jongwon</span>
+            <br />v1.0.0
+          </p>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════
           MOBILE — bottom tab bar (< lg)
       ════════════════════════════════════════ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 flex">
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 flex"
+        style={{ background: '#FAFCFB' }}
+      >
         {items.map(({ id, label, icon: Icon, disabled }) => {
           const isActive = currentPage === id;
           return (
@@ -67,21 +123,29 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
               key={id}
               onClick={() => handleNavigate(id)}
               disabled={disabled}
-              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors"
+              style={
                 isActive
-                  ? 'text-blue-600'
+                  ? { color: CS_TEAL }
                   : disabled
-                  ? 'text-gray-300'
-                  : 'text-gray-500 active:bg-gray-100'
-              }`}
+                  ? { color: '#CBD5E1' }
+                  : { color: '#9CA3AF' }
+              }
             >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
-              <span className={`text-[10px] font-medium ${isActive ? 'text-blue-600' : ''}`}>
+              {/* Top active indicator */}
+              {isActive && (
+                <span
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
+                  style={{ background: CS_TEAL }}
+                />
+              )}
+              <Icon size={21} strokeWidth={isActive ? 2.5 : 1.8} />
+              <span
+                className="text-[10px] font-medium"
+                style={isActive ? { color: CS_TEAL, fontWeight: 700 } : {}}
+              >
                 {label}
               </span>
-              {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />
-              )}
             </button>
           );
         })}
