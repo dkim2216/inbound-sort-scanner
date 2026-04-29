@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
 
+const CS_TEAL = '#00C9A7';
+const CS_NAVY = '#0D1B4B';
+
 export default function UploadPage({ onSessionCreated }) {
   const [name, setName] = useState('');
   const [file, setFile] = useState(null);
@@ -13,18 +16,12 @@ export default function UploadPage({ onSessionCreated }) {
       setMessage({ type: 'error', text: 'Name and CSV file required' });
       return;
     }
-
     try {
       setLoading(true);
       const formData = new FormData();
       formData.append('name', name);
       formData.append('file', file);
-
-      const res = await fetch('/api/sessions', {
-        method: 'POST',
-        body: formData
-      });
-
+      const res = await fetch('/api/sessions', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
         setMessage({ type: 'success', text: `Session created! ${data.rowsInserted} rows imported.` });
@@ -42,27 +39,34 @@ export default function UploadPage({ onSessionCreated }) {
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">Upload CSV Manifest</h2>
-      <p className="text-gray-600 mb-8">Create a new sorting session by uploading your warehouse manifest</p>
+    <div className="p-4 md:p-8 max-w-2xl mx-auto">
+      <h2 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: CS_NAVY }}>Upload CSV Manifest</h2>
+      <p className="text-gray-500 mb-8">Create a new sorting session by uploading your warehouse manifest</p>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-8">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-6">
+
         {/* Session Name */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Session Name</label>
+        <div>
+          <label className="block text-sm font-semibold mb-2" style={{ color: CS_NAVY }}>Session Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Warehouse Batch #1"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none transition-all"
+            style={{ '--tw-ring-color': CS_TEAL }}
+            onFocus={e => e.target.style.borderColor = CS_TEAL}
+            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
           />
         </div>
 
         {/* File Upload */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+        <div>
+          <label className="block text-sm font-semibold mb-2" style={{ color: CS_NAVY }}>CSV File</label>
+          <div
+            className="border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer"
+            style={{ borderColor: file ? CS_TEAL : '#E5E7EB', background: file ? '#E6FAF7' : '#FAFAFA' }}
+          >
             <input
               type="file"
               accept=".csv"
@@ -71,42 +75,44 @@ export default function UploadPage({ onSessionCreated }) {
               id="file-input"
             />
             <label htmlFor="file-input" className="cursor-pointer">
-              <Upload size={32} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-gray-700 font-medium">Click to upload or drag and drop</p>
-              <p className="text-sm text-gray-500">CSV files only</p>
-              {file && <p className="text-sm text-green-600 mt-2">✓ {file.name}</p>}
+              <Upload size={32} className="mx-auto mb-2" style={{ color: file ? CS_TEAL : '#9CA3AF' }} />
+              {file ? (
+                <p className="font-semibold" style={{ color: CS_TEAL }}>✓ {file.name}</p>
+              ) : (
+                <>
+                  <p className="text-gray-700 font-medium">Click to upload or drag and drop</p>
+                  <p className="text-sm text-gray-400 mt-1">CSV files only</p>
+                </>
+              )}
             </label>
           </div>
         </div>
 
         {/* CSV Format Info */}
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-blue-900 mb-2">CSV Format Required:</p>
-          <code className="text-xs text-blue-800 block font-mono">case_id, sku, qty, sort_group, dealer</code>
-          <p className="text-xs text-blue-700 mt-2">Example: C001, SKU-A, 20, GRP-1, Dealer Alpha</p>
+        <div className="rounded-xl p-4" style={{ background: '#E6FAF7', border: `1px solid ${CS_TEAL}30` }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: CS_NAVY }}>CSV Format Required:</p>
+          <code className="text-xs block font-mono" style={{ color: CS_TEAL }}>case_id, sku, qty, sort_group, dealer</code>
+          <p className="text-xs text-gray-500 mt-1">Example: C001, SKU-A, 20, GRP-1, Dealer Alpha</p>
         </div>
 
         {/* Message */}
         {message && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+          <div className={`p-4 rounded-xl flex items-center gap-3 ${
             message.type === 'success'
               ? 'bg-green-50 text-green-800 border border-green-200'
               : 'bg-red-50 text-red-800 border border-red-200'
           }`}>
-            {message.type === 'success' ? (
-              <CheckCircle size={20} />
-            ) : (
-              <AlertCircle size={20} />
-            )}
-            <p>{message.text}</p>
+            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            <p className="text-sm">{message.text}</p>
           </div>
         )}
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="w-full text-white py-3 rounded-xl font-semibold disabled:opacity-50 transition-opacity"
+          style={{ background: CS_TEAL }}
         >
           {loading ? 'Uploading...' : 'Create Session'}
         </button>
