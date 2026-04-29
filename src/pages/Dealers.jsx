@@ -283,7 +283,7 @@ export default function Dealers({ sessionId, sessions }) {
                       <ChevronRight size={16} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                     </div>
                   </div>
-                  <p className="font-bold text-lg" style={{ color: CS_NAVY }}>{group}</p>
+                  <p className="font-bold text-lg" style={{ color: CS_NAVY }}>Group: {group}</p>
                   <div className="mt-2 flex gap-4 text-xs text-gray-400">
                     <span>{cases.length} item{cases.length !== 1 ? 's' : ''}</span>
                     <span className="font-semibold text-green-600">Qty: {qty}</span>
