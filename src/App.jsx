@@ -4,7 +4,7 @@ import Sessions from './pages/Sessions';
 import Upload from './pages/Upload';
 import Scan from './pages/Scan';
 import Progress from './pages/Progress';
-import Dealers from './pages/Dealers'; // ✅ ADDED: was missing
+import Dealers from './pages/Dealers';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('sessions');
@@ -52,11 +52,7 @@ export default function App() {
           />
         );
       case 'upload':
-        return (
-          <Upload
-            onSessionCreated={handleSessionCreated}
-          />
-        );
+        return <Upload onSessionCreated={handleSessionCreated} />;
       case 'scan':
         return (
           <Scan
@@ -66,19 +62,9 @@ export default function App() {
           />
         );
       case 'progress':
-        return (
-          <Progress
-            sessionId={activeSession}
-            sessions={sessions}
-          />
-        );
-      case 'dealers': // ✅ ADDED: was missing — caused blank page
-        return (
-          <Dealers
-            sessionId={activeSession}
-            sessions={sessions}
-          />
-        );
+        return <Progress sessionId={activeSession} sessions={sessions} />;
+      case 'dealers':
+        return <Dealers sessionId={activeSession} sessions={sessions} />;
       default:
         return null;
     }
@@ -91,7 +77,8 @@ export default function App() {
         onPageChange={setCurrentPage}
         activeSession={activeSession}
       />
-      <main className="flex-1 overflow-auto">
+      {/* pb-16 on mobile gives clearance above the bottom tab bar */}
+      <main className="flex-1 overflow-auto pb-16 lg:pb-0">
         {renderPage()}
       </main>
     </div>
