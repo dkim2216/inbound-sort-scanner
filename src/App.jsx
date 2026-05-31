@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import Login from './pages/Login';
 import Sessions from './pages/Sessions';
 import Upload from './pages/Upload';
 import Scan from './pages/Scan';
@@ -7,13 +8,55 @@ import Progress from './pages/Progress';
 import Dealers from './pages/Dealers';
 
 export default function App() {
+  const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('sessions');
   const [sessions, setSessions] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Restore user from localStorage on mount
   useEffect(() => {
-    fetchSessions();
+    const savedUser = localStorage.getItem('sorter_user');
+    if (savedUser) setUser(savedUser);
+  }, []);
+
+  // Once user is set, fetch sessions and restore active session
+  useEffect(() => {
+    if (user) {
+      fetchSessions().then(() => {
+        const savedSessionId = localStorage.getItem('sorter_active_session');
+        if (savedSessionId) {
+          setActiveSession(Number(savedSessionId));
+          setCurrentPage('scan');
+        }
+      });
+    }
+  }, [user]);
+
+  // Persist active session to localStorage whenever it changes
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem('sorter_active_session', activeSession);
+      localStorage.setItem('sorter_saved_at', new Date().toISOString());
+      const s = sessions.find((s) => s.id === activeSession);
+      if (s) localStorage.setItem('sorter_active_session_name', s.name);
+    }
+  }, [activeSession]);
+
+  // Release all locks when the tab/window closes
+  useEffect(() => {
+    const handleUnload = () => {
+      const currentUser = localStorage.getItem('sorter_user');
+      if (currentUser) {
+        // sendBeacon works reliably during page unload
+        navigator.sendBeacon(
+          `/api/lock/operator/${encodeURIComponent(currentUser)}`,
+          JSON.stringify({})
+        );
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
   const fetchSessions = async () => {
@@ -22,11 +65,34 @@ export default function App() {
       const res = await fetch('/api/sessions');
       const data = await res.json();
       setSessions(data);
+      return data;
     } catch (err) {
       console.error('Error fetching sessions:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogin = (name, resumeSessionId) => {
+    setUser(name);
+    if (resumeSessionId) {
+      setActiveSession(Number(resumeSessionId));
+      setCurrentPage('scan');
+    }
+  };
+
+  const handleLogout = async () => {
+    // Release all locks held by this operator
+    if (user) {
+      try {
+        await fetch(`/api/lock/operator/${encodeURIComponent(user)}`, { method: 'DELETE' });
+      } catch (e) {
+        console.warn('Could not release locks on logout', e);
+      }
+    }
+    localStorage.setItem('sorter_saved_at', new Date().toISOString());
+    setUser(null);
+    setCurrentPage('sessions');
   };
 
   const handleSessionCreated = (newSession) => {
@@ -39,6 +105,10 @@ export default function App() {
     setActiveSession(sessionId);
     setCurrentPage('scan');
   };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -59,6 +129,7 @@ export default function App() {
             sessionId={activeSession}
             onSessionChange={setActiveSession}
             sessions={sessions}
+            user={user}                  // ← passed for locking
           />
         );
       case 'progress':
@@ -76,8 +147,9 @@ export default function App() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         activeSession={activeSession}
+        user={user}
+        onLogout={handleLogout}
       />
-      {/* pb-16 on mobile gives clearance above the bottom tab bar */}
       <main className="flex-1 overflow-auto pb-16 lg:pb-0">
         {renderPage()}
       </main>
