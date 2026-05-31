@@ -1,6 +1,5 @@
-import { Upload, ScanLine, BarChart3, List, Users } from 'lucide-react';
+import { Upload, ScanLine, BarChart3, List, Users, LogOut } from 'lucide-react';
 
-// ── Brand colors ──────────────────────────────────
 const CS_TEAL  = '#00C9A7';
 const CS_NAVY  = '#0D1B4B';
 const CS_LIGHT = '#E6FAF7';
@@ -13,7 +12,7 @@ const menuItems = [
   { id: 'dealers',   label: 'Dealers',   icon: Users },
 ];
 
-export default function Sidebar({ currentPage, onPageChange, activeSession }) {
+export default function Sidebar({ currentPage, onPageChange, activeSession, user, onLogout }) {
   const items = menuItems.map(item => ({
     ...item,
     disabled: ['scan', 'progress', 'dealers'].includes(item.id) && !activeSession,
@@ -26,9 +25,7 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
 
   return (
     <>
-      {/* ════════════════════════════════════════
-          DESKTOP — permanent sidebar (lg+)
-      ════════════════════════════════════════ */}
+      {/* ── DESKTOP sidebar ── */}
       <div
         className="hidden lg:flex flex-col w-64 h-screen border-r border-gray-100"
         style={{ background: '#FAFCFB' }}
@@ -76,9 +73,24 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer: user + logout */}
         <div className="p-5 border-t border-gray-100">
-          <p className="text-xs font-semibold mb-2" style={{ color: CS_NAVY }}>Cello Square</p>
+          {user && (
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-gray-400">Logged in as</p>
+                <p className="text-sm font-bold" style={{ color: CS_NAVY }}>{user}</p>
+              </div>
+              <button
+                onClick={onLogout}
+                title="Sign out"
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                style={{ color: '#9CA3AF' }}
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          )}
           <p className="text-[10px] text-gray-400 leading-relaxed">
             © 2026 Made by{' '}
             <span className="font-semibold" style={{ color: CS_TEAL }}>kim.jongwon</span>
@@ -87,9 +99,7 @@ export default function Sidebar({ currentPage, onPageChange, activeSession }) {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════
-          MOBILE — bottom tab bar (< lg)
-      ════════════════════════════════════════ */}
+      {/* ── MOBILE bottom tab bar ── */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 flex"
         style={{ background: '#FAFCFB' }}
