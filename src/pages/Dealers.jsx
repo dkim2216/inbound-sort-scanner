@@ -302,6 +302,7 @@ export default function Dealers({ sessionId, sessions }) {
   // ══════════════════════════════════════════════════════════════
   const completedCount  = dealers.filter(d => getAggregateStatus(allCaseIds(d)) === 'completed').length;
   const inProgressCount = dealers.filter(d => getAggregateStatus(allCaseIds(d)) === 'in-progress').length;
+  const totalSortGroups = new Set(dealers.flatMap(d => d.groups || [])).size;
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -312,12 +313,13 @@ export default function Dealers({ sessionId, sessions }) {
 
       {!loading && dealers.length > 0 && (<>
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           {[
-            { label: 'Total Dealers', value: dealers.length,  color: CS_NAVY },
-            { label: 'Complete',       value: completedCount,  color: '#16A34A' },
-            { label: 'In Progress',    value: inProgressCount, color: '#D97706' },
-            { label: 'Total Qty',      value: dealers.reduce((s, d) => s + (d.totalQty || 0), 0), color: CS_TEAL },
+            { label: 'Total Dealers',      value: dealers.length,  color: CS_NAVY },
+            { label: 'Total Sort Groups',  value: totalSortGroups, color: CS_TEAL },
+            { label: 'Complete',           value: completedCount,  color: '#16A34A' },
+            { label: 'In Progress',        value: inProgressCount, color: '#D97706' },
+            { label: 'Total Qty',          value: dealers.reduce((s, d) => s + (d.totalQty || 0), 0), color: '#6366F1' },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">{label}</p>
