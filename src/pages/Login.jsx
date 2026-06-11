@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { LogIn, User, RefreshCw } from 'lucide-react';
+import { LogIn, User, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 
 const CS_TEAL = '#00C9A7';
 const CS_NAVY = '#0D1B4B';
 
 export default function Login({ onLogin }) {
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [savedSession, setSavedSession] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check for a saved session to offer resume
     const savedUser = localStorage.getItem('sorter_user');
     const savedSessionId = localStorage.getItem('sorter_active_session');
     const savedSessionName = localStorage.getItem('sorter_active_session_name');
@@ -27,20 +28,49 @@ export default function Login({ onLogin }) {
     }
   }, []);
 
-  const handleLogin = (resume) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setLoading(true);
+  // Resume is only offered when the typed username matches the saved session's owner
+  const canResume =
+    savedSession &&
+    name.trim().toLowerCase() === savedSession.user.trim().toLowerCase();
 
-    if (!resume) {
-      // Clear active session so they start fresh
-      localStorage.removeItem('sorter_active_session');
-      localStorage.removeItem('sorter_active_session_name');
-      localStorage.removeItem('sorter_saved_at');
+  const handleLogin = async (resume) => {
+    const trimmed = name.trim();
+    if (!trimmed || !password) {
+      setError('Enter your username and password');
+      return;
     }
 
-    localStorage.setItem('sorter_user', trimmed);
-    onLogin(trimmed, resume ? savedSession?.sessionId : null);
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: trimmed, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Login failed');
+        setLoading(false);
+        return;
+      }
+
+      const verifiedUser = data.username;
+
+      if (!resume) {
+        localStorage.removeItem('sorter_active_session');
+        localStorage.removeItem('sorter_active_session_name');
+        localStorage.removeItem('sorter_saved_at');
+      }
+
+      localStorage.setItem('sorter_user', verifiedUser);
+      onLogin(verifiedUser, resume ? savedSession?.sessionId : null);
+    } catch (err) {
+      setError('Cannot reach server — check your connection');
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,13 +88,13 @@ export default function Login({ onLogin }) {
             <RefreshCw size={26} color="white" />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: CS_NAVY }}>
-            COMPANY NAME
+            Cello Square
           </h1>
           <p className="text-sm text-gray-400 mt-1 tracking-wide">Inbound Hub Scanner</p>
         </div>
 
-        {/* Resume card — shown only if previous session exists */}
-        {savedSession && (
+        {/* Resume card — only when username matches saved session owner */}
+        {canResume && (
           <div
             className="rounded-2xl p-4 mb-4 border-2"
             style={{ background: '#E6FAF7', borderColor: CS_TEAL }}
@@ -83,17 +113,16 @@ export default function Login({ onLogin }) {
 
         {/* Login card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="mb-5">
+          <div className="mb-4">
             <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: CS_NAVY }}>
-              Your Name
+              Username
             </label>
             <div className="relative">
               <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin(!!savedSession)}
+                onChange={(e) => { setName(e.target.value); setError(''); }}
                 placeholder="e.g. David"
                 autoFocus
                 className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none transition-colors"
@@ -103,20 +132,46 @@ export default function Login({ onLogin }) {
             </div>
           </div>
 
-          {savedSession ? (
+          <div className="mb-5">
+            <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: CS_NAVY }}>
+              Password
+            </label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin(!!canResume)}
+                placeholder="••••••••"
+                className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none transition-colors"
+                onFocus={(e) => (e.target.style.borderColor = CS_TEAL)}
+                onBlur={(e) => (e.target.style.borderColor = '#E5E7EB')}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+              <AlertCircle size={14} className="flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {canResume ? (
             <div className="space-y-2">
               <button
                 onClick={() => handleLogin(true)}
-                disabled={!name.trim() || loading}
+                disabled={!name.trim() || !password || loading}
                 className="w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold disabled:opacity-40 transition-opacity"
                 style={{ background: CS_TEAL }}
               >
                 <LogIn size={18} />
-                Continue Session
+                {loading ? 'Signing in...' : 'Continue Session'}
               </button>
               <button
                 onClick={() => handleLogin(false)}
-                disabled={!name.trim() || loading}
+                disabled={!name.trim() || !password || loading}
                 className="w-full py-3 rounded-xl font-semibold text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors"
               >
                 Start New Session
@@ -125,12 +180,12 @@ export default function Login({ onLogin }) {
           ) : (
             <button
               onClick={() => handleLogin(false)}
-              disabled={!name.trim() || loading}
+              disabled={!name.trim() || !password || loading}
               className="w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold disabled:opacity-40 transition-opacity"
               style={{ background: CS_TEAL }}
             >
               <LogIn size={18} />
-              Enter
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           )}
         </div>
