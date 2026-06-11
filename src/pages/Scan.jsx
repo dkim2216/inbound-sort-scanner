@@ -78,6 +78,16 @@ export default function Scan({ sessionId, sessions, user }) {
     }
   }, [step, selectedCase]);
 
+  // Poll SKU lock/progress info every 5s while on step 2 scan view,
+  // so other operators' locks show up without a manual refresh
+  useEffect(() => {
+    if (step !== 2 || showDestinations || !selectedCase) return;
+    const interval = setInterval(() => {
+      fetchSkusByCase(selectedCase).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [step, showDestinations, selectedCase]);
+
   const resetStep2 = () => {
     setSelectedCase('');
     setSelectedSku('');
