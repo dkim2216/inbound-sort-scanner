@@ -88,7 +88,7 @@ export default function Login({ onLogin }) {
             <RefreshCw size={26} color="white" />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: CS_NAVY }}>
-            Cello Square
+            Company Name
           </h1>
           <p className="text-sm text-gray-400 mt-1 tracking-wide">Inbound Hub Scanner</p>
         </div>
