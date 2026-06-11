@@ -48,10 +48,9 @@ export default function App() {
     const handleUnload = () => {
       const currentUser = localStorage.getItem('sorter_user');
       if (currentUser) {
-        // sendBeacon works reliably during page unload
+        // sendBeacon can only send POST — must use the POST release route
         navigator.sendBeacon(
-          `/api/lock/operator/${encodeURIComponent(currentUser)}`,
-          JSON.stringify({})
+          `/api/lock/operator/${encodeURIComponent(currentUser)}/release`
         );
       }
     };
