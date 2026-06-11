@@ -7,7 +7,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
-import bcrypt from 'bcryptjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -90,7 +89,10 @@ async function initDB() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_manifest_case ON manifest(case_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_sku_locks ON sku_locks(session_id, case_id, sku)`);
 
-    // ── Users table (operator accounts, manually managed) ──────────
+    // Enable pgcrypto for password hashing (managed via Neon SQL editor)
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
+
+    // ── Users table (managed directly in Neon SQL editor) ──────────
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -99,17 +101,6 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-
-    // Seed a default admin account on first run (username: admin / password: admin1234)
-    const existing = await pool.query(`SELECT COUNT(*) FROM users`);
-    if (toInt(existing.rows[0].count) === 0) {
-      const hash = await bcrypt.hash('admin1234', 10);
-      await pool.query(
-        `INSERT INTO users (username, password_hash) VALUES ($1, $2)`,
-        ['admin', hash]
-      );
-      console.log('✓ Seeded default user: admin / admin1234 — change this!');
-    }
 
     console.log('✓ Database initialized');
   } catch (err) {
@@ -128,7 +119,7 @@ async function purgeExpiredLocks() {
 // AUTH ENDPOINTS
 // ════════════════════════════════════════════════════════════════════════════════
 
-// Login: verify username + password
+// Login: verify username + password using pgcrypto
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) {
@@ -136,68 +127,19 @@ app.post('/api/auth/login', async (req, res) => {
   }
   try {
     const result = await pool.query(
-      `SELECT username, password_hash FROM users WHERE LOWER(username) = LOWER($1)`,
-      [String(username).trim()]
+      `SELECT username
+       FROM users
+       WHERE LOWER(username) = LOWER($1)
+         AND password_hash = crypt($2, password_hash)`,
+      [String(username).trim(), password]
     );
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-    const valid = await bcrypt.compare(password, result.rows[0].password_hash);
-    if (!valid) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
     res.json({ ok: true, username: result.rows[0].username });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ── Admin user management (protected by ADMIN_KEY env var) ─────────────────────
-function requireAdmin(req, res, next) {
-  const key = req.headers['x-admin-key'];
-  if (!process.env.ADMIN_KEY || key !== process.env.ADMIN_KEY) {
-    return res.status(403).json({ error: 'Forbidden — invalid admin key' });
-  }
-  next();
-}
-
-// List users
-app.get('/api/auth/users', requireAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`SELECT username, created_at FROM users ORDER BY username`);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create or update a user (upsert)
-app.post('/api/auth/users', requireAdmin, async (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) {
-    return res.status(400).json({ error: 'username and password required' });
-  }
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    await pool.query(
-      `INSERT INTO users (username, password_hash) VALUES ($1, $2)
-       ON CONFLICT (username) DO UPDATE SET password_hash = $2`,
-      [String(username).trim(), hash]
-    );
-    res.json({ ok: true, username: String(username).trim() });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Delete a user
-app.delete('/api/auth/users/:username', requireAdmin, async (req, res) => {
-  try {
-    await pool.query(`DELETE FROM users WHERE username = $1`, [req.params.username]);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 });
 
